@@ -5,7 +5,15 @@
 			this._data = {};
 			this._concurrency = num;
 		},
-		reflowProto = reflow.prototype;
+
+
+		reflowProto = reflow.prototype,
+
+
+		isArray = Array.isArray || function(obj) {
+			return !!(obj && obj.concat && obj.unshift && !obj.callee);
+		};
+
 
 
 	reflowProto.wait = function (fn) {
@@ -23,11 +31,30 @@
 		return this;
 	};
 
-	reflowProto.grab = function (key) {
-		var data = this._data;
-
+	reflowProto.accumulate = function (key) {
 		return this.wait(function (obj) {
-			data[key] = obj;
+			var data = this._data;
+
+			if (!key) {
+				data = this;
+				key = "_data";
+			}
+
+			if (!isArray(data[key])) {
+				var tmp = data[key];
+				data[key] = [];
+				if (tmp !== undefined) {
+					data[key].push(tmp);
+				}
+			}
+
+			data[key].push(obj);
+		});
+	};
+
+	reflowProto.grab = function (key) {
+		return this.wait(function (obj) {
+			this._data[key] = obj;
 		});
 	};
 
@@ -50,6 +77,7 @@
 	reflowProto.exec = function () {
 		var args = Array.prototype.slice.call(arguments, 0),
 			i = 0, l = args.length;
+
 		for (; l > i; ++i) {
 			args[i].call(this);
 		}
