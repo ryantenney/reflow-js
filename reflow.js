@@ -1,21 +1,34 @@
-(function (root) {
+(function (root, undefined) {
 
-	var reflow = function () {
-			this._count = 0;
-			this._data = {};
-			this._concurrency = num;
-		},
+var
 
-
-		reflowProto = reflow.prototype,
-
-
-		isArray = Array.isArray || function(obj) {
-			return !!(obj && obj.concat && obj.unshift && !obj.callee);
-		};
+	reflow = function () {
+		this._count = 0;
+		this._data = {};
+		this._concurrency = 1;
+	},
 
 
+	reflowProto = reflow.prototype,
 
+
+	isArray = Array.isArray || function(obj) {
+		return !!(obj && obj.concat && obj.unshift && !obj.callee);
+	};
+
+
+	if (typeof exports !== 'undefined') {
+		exports.reflow = reflow;
+	}
+
+	root.reflow = reflow;
+
+	reflow.VERSION = '0.1.2';
+
+
+	/*
+	 * wait
+	 */
 	reflowProto.wait = function (fn) {
 		this._count++;
 		var self = this;
@@ -26,11 +39,19 @@
 		};
 	};
 
+
+	/*
+	 * concurrency
+	 */
 	reflowProto.concurrency = function (num) {
 		this._concurrency = num;
 		return this;
 	};
 
+
+	/*
+	 * accumulate
+	 */
 	reflowProto.accumulate = function (key) {
 		return this.wait(function (obj) {
 			var data = this._data;
@@ -52,28 +73,48 @@
 		});
 	};
 
+
+	/*
+	 * grab
+	 */
 	reflowProto.grab = function (key) {
 		return this.wait(function (obj) {
 			this._data[key] = obj;
 		});
 	};
 
+
+	/*
+	 * getData
+	 */
 	reflowProto.getData = function () {
 		return this._data;
 	};
 
+
+	/*
+	 * ifComplete
+	 */
 	reflowProto.ifComplete = function () {
 		if (this._count == 0 && this._complete) {
 			this._complete(this._data);
 		}
 	};
 
+
+	/*
+	 * then
+	 */
 	reflowProto.then = function (fn) {
 		this._complete = fn;
 		this.ifComplete();
 		return this;
 	};
 
+
+	/*
+	 * exec
+	 */
 	reflowProto.exec = function () {
 		var args = Array.prototype.slice.call(arguments, 0),
 			i = 0, l = args.length;
@@ -84,11 +125,13 @@
 		return this;
 	};
 
+
+	/*
+	 * seq
+	 */
 	reflowProto.seq = function () {
 
 	};
-
-	root.reflow = this;
 
 
 }(this));
